@@ -1,16 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function App() {
-  const [tasks, setTask] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchTasks() {
+      try {
+        const res = await fetch(`/tasks`);
+        const data = await res.json();
+
+        if (data.Response === false) throw new Error("error fetching data");
+
+        setTasks(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTasks();
+  }, []);
 
   function handleTasks(task) {
-    setTask((tasks) => [...tasks, task]);
+    setTasks((tasks) => [...tasks, task]);
   }
 
   return (
     <div>
       <Main onAddTask={handleTasks} />
-      <ResultViw tasks={tasks} />
+      {loading && <ResultViw tasks={tasks} />}
+      {!loading && !error && <ResultViw tasks={tasks} />}
     </div>
   );
 }
@@ -70,9 +91,11 @@ function ResultViw({ tasks }) {
 function Task({ task }) {
   return (
     <div>
+      <h3>Task - {task.id}</h3>
       <p>title: {task.title}</p>
       <p>description: {task.description}</p>
       <p>status: {task.status}</p>
+      <p>created at: {task.created_at}</p>
     </div>
   );
 }
